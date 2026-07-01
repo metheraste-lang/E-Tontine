@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Tontine Tchad — Épargne & Tontines Digitales</title>
+    <style>
+        :root {
+            --bg-main: #0b1329;
+            --bg-card: #1c2541;
+            --emerald: #10b981;
+            --emerald-hover: #059669;
+            --blue: #3b82f6;
+            --rose: #f43f5e;
+            --amber: #f59e0b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        nav { 
+            background-color: rgba(28, 37, 65, 0.8); 
+            backdrop-filter: blur(10px);
+            padding: 0 25px; 
+            height: 70px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; letter-spacing: -0.05em;}
+        .logo span { color: var(--emerald); }
+        
+        .nav-btn { 
+            background: linear-gradient(135deg, var(--emerald), var(--emerald-hover)); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .nav-btn:active { transform: scale(0.95); }
+
+        #notification-container {
+            position: fixed;
+            top: 85px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+            width: 100%;
+        }
+        .toast-notification {
+            background: var(--bg-card);
+            border-left: 4px solid var(--blue);
+            color: var(--text-main);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .toast-notification.success { border-left-color: var(--emerald); }
+        .toast-notification.warning { border-left-color: var(--amber); }
+        .toast-notification.error { border-left-color: var(--rose); }
+        
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+
+        .tabs-menu { display: flex; background: var(--bg-card); border-radius: 12px; padding: 5px; margin: 20px 0; border: 1px solid var(--border); }
+        .tab-link { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: 600; border-radius: 8px; color: var(--text-muted); transition: 0.3s; }
+        .tab-link.active { background: var(--bg-main); color: var(--emerald); border: 1px solid var(--border); }
+
+        .hero { 
+            background: radial-gradient(circle at top right, #1e3a8a, var(--bg-main));
+            padding: 80px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid var(--border);
+        }
+        .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 15px; background: linear-gradient(to right, #ffffff, var(--emerald)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-muted); max-width: 600px; margin: 0 auto 30px auto; font-size: 1.1rem; line-height: 1.5; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        
+        .card { 
+            background: var(--bg-card); 
+            padding: 25px; 
+            border-radius: 20px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
+        .stat-card h4 { margin: 0; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 800; margin-top: 10px; color: white; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea { 
+            width: 100%; padding: 14px; background: var(--bg-main); border: 1px solid var(--border); 
+            border-radius: 10px; color: white; box-sizing: border-box; font-size: 1rem; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--emerald); outline: none; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width: 768px) { .grid-2, .stats-grid { grid-template-columns: 1fr; } }
+
+        .tx-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .tx-table th { padding: 14px; background: rgba(11, 19, 41, 0.6); color: var(--text-muted); font-weight: 600; text-align: left; }
+        .tx-table td { padding: 14px; border-bottom: 1px solid var(--border); }
+        
+        .badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: var(--emerald); display: inline-block; }
+        .badge.warning { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+        .badge.danger { background: rgba(244, 63, 94, 0.2); color: var(--rose); }
+
+        .progress-bar-bg { background: var(--bg-main); height: 10px; border-radius: 5px; margin-top: 10px; overflow: hidden; border: 1px solid var(--border); }
+        .progress-bar-fill { background: linear-gradient(to right, var(--blue), var(--emerald)); height: 100%; width: 0%; border-radius: 5px; transition: width 0.5s; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 19, 41, 0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 24px; max-width: 500px; width: 100%; box-sizing: border-box; border: 1px solid var(--border); overflow-y: auto; max-height: 90vh; }
+
+        .tontine-item { background: var(--bg-main); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; }
+        .payment-info-box { background: rgba(59, 130, 246, 0.1); border: 1px dashed var(--blue); padding: 15px; border-radius: 10px; margin-bottom: 18px; font-size: 0.9rem; line-height: 1.4; }
+
+        .member-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; margin-top: 5px; border-radius: 6px; font-size: 0.85rem;}
+
+        .hidden { display: none !important; }
+        footer { text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 50px; }
+        .btn-block { width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; border: none; }
+        .btn-emerald { background: linear-gradient(135deg, var(--emerald), var(--emerald-hover)); }
+        .btn-small { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; border: none; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <div id="notification-container"></div>
+
+    <nav>
+        <div class="logo" onclick="showPage('landing')">🇹🇩 E-TONTINE <span>TCHAD</span></div>
+        <div id="nav-actions">
+            <button class="nav-btn" style="background: transparent; border: 1px solid var(--border); margin-right: 10px;" onclick="showPage('login')">Connexion</button>
+            <button class="nav-btn" onclick="showPage('register')">Créer un compte</button>
+        </div>
+    </nav>
+
+    <main>
+        <div id="page-landing" class="page-section">
+            <div class="hero">
+                <h1>L'Épargne Communautaire<br>Digitale au Tchad</h1>
+                <p>Créez vos propres tontines collectives ou vos coffres d'épargne individuels de manière autonome.</p>
+                <button class="nav-btn" style="padding: 16px 45px; font-size: 1.1rem; border-radius: 14px;" onclick="showPage('register')">Ouvrir un compte sécurisé</button>
+            </div>
+        </div>
+
+        <div id="page-register" class="page-section hidden container" style="max-width: 480px;">
+            <div class="card">
+                <h2 style="margin-top:0; text-align:center; font-size: 1.6rem;">Création de compte</h2>
+                <div id="sponsor-badge-info" style="display:none; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--emerald); border-radius: 8px; padding: 10px; font-size: 0.85rem; text-align: center; margin-bottom: 15px; color: var(--emerald);">
+                    👋 Vous êtes parrainé par un membre de la plateforme !
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-bottom: 25px;">Vos données d'accès sont cryptées localement.</p>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Nom & Prénom</label>
+                        <input type="text" id="reg-name" placeholder="Ex: Mahamat Allamine" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Numéro Airtel / Moov Money</label>
+                        <input type="tel" id="reg-phone" placeholder="Ex: 66XXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mot de passe</label>
+                        <input type="password" id="reg-password" placeholder="••••••••" minlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmer le mot de passe</label>
+                        <input type="password" id="reg-confirm-password" placeholder="••••••••" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn-block btn-emerald">Chiffrer & Enregistrer</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page-login" class="page-section hidden container" style="max-width: 480px;">
+            <div class="card">
+                <h2 style="margin-top:0; text-align:center; font-size: 1.6rem;">Accès Sécurisé</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Numéro de téléphone</label>
+                        <input type="tel" id="login-phone" placeholder="66XXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mot de passe</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-block btn-emerald">Authentifier la session</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page-dashboard" class="page-section hidden container">
+            
+            <div class="card" style="background: linear-gradient(135deg, #1e3a8a, #0f172a); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h2 style="margin:0; font-size: 1.6rem;" id="welcome-text">Espace de Gestion</h2>
+                    <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 0.85rem;">Statut : Connecté en sécurité.</p>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="nav-btn" style="background: transparent; border: 1px solid var(--blue); color: var(--blue);" onclick="copyReferralLink()">🔗 Mon lien de parrainage</button>
+                    <button class="nav-btn" style="background: transparent; border: 1px solid var(--amber); color: var(--amber);" onclick="openPasswordModal()">🔑 Changer le passe</button>
+                    <button class="nav-btn" onclick="openDepositModal()">💳 Dépôt</button>
+                    <button class="nav-btn" style="background: var(--blue);" onclick="openWithdrawalModal()">📥 Retrait</button>
+                </div>
+            </div>
+
+            <div class="tabs-menu">
+                <div class="tab-link active" id="tab-home" onclick="switchDashboardTab('home')">📊 Mes Comptes</div>
+                <div class="tab-link" id="tab-create" onclick="switchDashboardTab('create')">🛠️ Créer / Rejoindre</div>
+                <div class="tab-link" id="tab-sim" onclick="switchDashboardTab('sim')">🧮 Simulateur</div>
+            </div>
+
+            <div id="dashboard-tab-home">
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid var(--emerald);">
+                        <h4>Tontines Collectives</h4>
+                        <div class="value" id="stat-group-total">0 FCFA</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid var(--blue);">
+                        <h4>Tontines Individuelles</h4>
+                        <div class="value" id="stat-solo-total">0 FCFA</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid var(--amber);">
+                        <h4>En attente d'Approbation</h4>
+                        <div class="value" id="stat-pending-count" style="color: var(--amber);">0 Opération</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="margin-top:0; font-size: 1.1rem; color: var(--emerald);">📂 Vos Tontines Participatives & Actives</h3>
+                        <div id="my-tontines-container"></div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-top: 0; font-size: 1.1rem; color: var(--blue);">🎯 Objectif d'épargne cumulée</h3>
+                        <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:0.9rem;">
+                            <span>Progression :</span>
+                            <span id="solo-progress-text" style="font-weight:bold; color:var(--blue);">0 / 500,000 FCFA</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="solo-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h3 style="margin-top:0; font-size: 1.2rem; margin-bottom: 20px;">📜 Journal de vos Flux Financiers</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="tx-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Heure</th>
+                                    <th>Type & Tontine</th>
+                                    <th>Opérateur</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-log-container"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard-tab-create" class="hidden">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="margin-top: 0; font-size: 1.3rem; color: var(--emerald);">🛠️ Lancer une Nouvelle Tontine</h3>
+                        <form onsubmit="handleCreateTontine(event)">
+                            <div class="form-group">
+                                <label>Nom ou Titre de la Tontine</label>
+                                <input type="text" id="ton-title" placeholder="Ex: Tontine Commerce Grand Marché" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Type de Tontine</label>
+                                <select id="ton-type" onchange="toggleFormFields()">
+                                    <option value="collective">👥 Collective (Plusieurs participants à tour de rôle)</option>
+                                    <option value="individuelle">🔒 Individuelle (Coffre personnel bloqué)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fréquence des dépôts</label>
+                                <select id="ton-frequency">
+                                    <option value="mensuel">📅 Mensuelle</option>
+                                    <option value="hebdomadaire">📆 Hebdomadaire</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Montant de la mise (FCFA)</label>
+                                <input type="number" id="ton-amount" placeholder="Ex: 25000" required>
+                            </div>
+                            <div class="form-group" id="field-participants">
+                                <label>Nombre maximal de Participants</label>
+                                <input type="number" id="ton-members" value="5" min="2">
+                            </div>
+                            <button type="submit" class="btn-block btn-emerald">Activer la tontine</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-top: 0; font-size: 1.3rem; color: var(--blue);">🔑 Rejoindre via un Code Unique</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Entrez le code d'identification partagé par l'initiateur pour intégrer un groupe de tontine collective existant.</p>
+                        <form onsubmit="handleJoinTontine(event)">
+                            <div class="form-group">
+                                <label>Code Unique de la Tontine (ID)</label>
+                                <input type="text" id="join-ton-id" placeholder="Ex: ton_171629..." required>
+                            </div>
+                            <button type="submit" class="btn-block" style="background: linear-gradient(135deg, var(--blue), #2563eb);">Intégrer le groupe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard-tab-sim" class="hidden">
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-top: 0; font-size: 1.1rem;">🧮 Simulateur Rapide</h3>
+                    <div class="form-group">
+                        <label>Mise souhaitée (FCFA)</label>
+                        <input type="number" id="sim-mise" value="25000" oninput="runSimulation()">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de participants</label>
+                        <input type="number" id="sim-membres" value="10" oninput="runSimulation()">
+                    </div>
+                    <div style="background: var(--bg-main); padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-top: 20px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+                            <span>Cagnotte générée :</span>
+                            <span id="sim-result-cagnotte" style="font-weight:bold; color:var(--emerald);">250,000 FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ranking-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 550px;">
+                <h3 style="margin-top:0; color: var(--emerald);" id="ranking-modal-title">Organiser le tour de rôle</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Attribuez manuellement ou via l'algorithme équitable l'ordre de bénéfice de la cagnotte pour chaque participant.
+                </p>
+                <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                    <button class="btn-block" style="background: var(--amber); font-size: 0.85rem; padding: 10px;" onclick="generateRandomRanking()">🎲 Tirage Aléatoire</button>
+                </div>
+                <div id="ranking-members-list" style="margin-bottom:20px;"></div>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn-block" style="background:transparent; border:1px solid var(--border); color:white;" onclick="closeRankingModal()">Fermer</button>
+                    <button type="button" class="btn-block btn-emerald" onclick="saveManualRanking()">Enregistrer le classement</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="password-modal" class="modal hidden">
+            <div class="modal-content" style="border-color: var(--amber);">
+                <h3 style="color: var(--amber); margin-top:0;">🔐 Mettre à jour votre Clé Secrète</h3>
+                <form onsubmit="handleUpdatePassword(event)">
+                    <div class="form-group">
+                        <label>Mot de passe Actuel</label>
+                        <input type="password" id="pwd-current" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nouveau Mot de passe (min 6 caractères)</label>
+                        <input type="password" id="pwd-new" placeholder="••••••••" minlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmer le nouveau mot de passe</label>
+                        <input type="password" id="pwd-confirm" placeholder="••••••••" minlength="6" required>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-block" style="background:transparent; border:1px solid var(--border); color:white;" onclick="closePasswordModal()">Annuler</button>
+                        <button type="submit" class="btn-block" style="background: linear-gradient(135deg, var(--amber), #d97706)">Sauvegarder le code</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="deposit-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 style="margin-top:0;">Déclarer un Versement</h3>
+                <form onsubmit="handleDepositSubmit(event)">
+                    <div class="form-group">
+                        <label>Sélectionner la Tontine Cible</label>
+                        <select id="dep-tontine-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Opérateur de Paiement</label>
+                        <select id="dep-operator" onchange="updatePaymentInstructions()">
+                            <option value="Airtel Money Tchad">Airtel Money Tchad</option>
+                            <option value="Moov Money">Moov Money</option>
+                        </select>
+                    </div>
+                    <div id="payment-instructions" class="payment-info-box"></div>
+                    <div class="form-group">
+                        <label>Votre numéro de dépôt (Expéditeur)</label>
+                        <input type="tel" id="dep-user-phone" placeholder="Ex: 62XXXXXX ou 98XXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Montant Versé (FCFA)</label>
+                        <input type="number" id="dep-amount" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ID / Code de référence du reçu SMS</label>
+                        <textarea id="dep-proof" rows="2" placeholder="Collez le SMS de confirmation ou l'identifiant ici" required></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-block" style="background:transparent; border:1px solid var(--border); color:white;" onclick="closeDepositModal()">Annuler</button>
+                        <button type="submit" class="btn-block btn-emerald">Envoyer le reçu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="withdraw-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 style="color: var(--blue); margin-top:0;">Demande de Décaissement</h3>
+                <div class="payment-info-box" style="border-color: var(--rose); background: rgba(244, 63, 94, 0.05); color: #f43f5e;">
+                    ⚠️ <b>Frais de système applicables :</b> Un prélèvement réglementaire de <b>9%</b> est déduit automatiquement sur chaque retrait pour assurer la maintenance et la couverture réseau.
+                </div>
+                <form onsubmit="handleWithdrawalSubmit(event)">
+                    <div class="form-group">
+                        <label>Depuis la tontine</label>
+                        <select id="with-tontine-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Numéro de réception des fonds</label>
+                        <input type="tel" id="with-phone" placeholder="Ex: 66XXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Montant brut à retirer (FCFA)</label>
+                        <input type="number" id="with-amount" placeholder="Ex: 50000" oninput="calculateWithdrawalFees()" required>
+                    </div>
+                    <div id="withdrawal-fee-feedback" style="font-size: 0.85rem; margin-bottom: 18px; color: var(--text-muted); background: var(--bg-main); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                        Frais (9%) : <span style="color: var(--rose); font-weight: bold;">0 F</span> | Montant Net transféré : <span style="color: var(--emerald); font-weight: bold;">0 F</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-block" style="background:transparent; border:1px solid var(--border); color:white;" onclick="closeWithdrawalModal()">Annuler</button>
+                        <button type="submit" class="btn-block" style="background:var(--blue);">Demander le retrait</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>© 2026 E-Tontine Tchad — Épargne Digitale Certifiée.</footer>
+
+    <script>
+        if (!localStorage.getItem('t_users')) localStorage.setItem('t_users', JSON.stringify([]));
+        if (!localStorage.getItem('t_tontines')) localStorage.setItem('t_tontines', JSON.stringify([]));
+        if (!localStorage.getItem('t_history')) localStorage.setItem('t_history', JSON.stringify([]));
+
+        let currentUser = null;
+        let activeRankingTontineId = null; 
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refId = urlParams.get('ref');
+            if (refId) {
+                sessionStorage.setItem('pending_sponsor_id', refId);
+                document.getElementById('sponsor-badge-info').style.display = 'block';
+                showPage('register');
+            }
+        });
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 4500);
+        }
+
+        function copyReferralLink() {
+            if (!currentUser) return;
+            const baseUri = window.location.origin + window.location.pathname;
+            const referralLink = `${baseUri}?ref=${currentUser.id}`;
+            navigator.clipboard.writeText(referralLink).then(() => {
+                showNotification("📋 Lien de parrainage copié !", "success");
+            }).catch(() => {
+                showNotification("❌ Erreur de copie. Lien : " + referralLink, "error");
+            });
+        }
+
+        function copyTontineId(id) {
+            navigator.clipboard.writeText(id).then(() => {
+                showNotification("🔑 Code Tontine copié ! Partagez-le avec les futurs membres.", "success");
+            });
+        }
+
+        function calculateWithdrawalFees() {
+            const amountInput = document.getElementById('with-amount').value;
+            const feedbackBox = document.getElementById('withdrawal-fee-feedback');
+            const amount = parseInt(amountInput) || 0;
+            if(amount <= 0) {
+                feedbackBox.innerHTML = `Frais (9%) : <span style="color: var(--rose); font-weight: bold;">0 F</span> | Montant Net transféré : <span style="color: var(--emerald); font-weight: bold;">0 F</span>`;
+                return;
+            }
+            const fee = Math.round(amount * 0.09);
+            const netAmount = amount - fee;
+            feedbackBox.innerHTML = `Frais (9%) : <span style="color: var(--rose); font-weight: bold;">${fee.toLocaleString()} F</span> | Montant Net transféré : <span style="color: var(--emerald); font-weight: bold;">${netAmount.toLocaleString()} F</span>`;
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+        }
+
+        function switchDashboardTab(tabId) {
+            document.getElementById('dashboard-tab-home').classList.add('hidden');
+            document.getElementById('dashboard-tab-create').classList.add('hidden');
+            document.getElementById('dashboard-tab-sim').classList.add('hidden');
+            document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('dashboard-tab-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function toggleFormFields() {
+            const type = document.getElementById('ton-type').value;
+            document.getElementById('field-participants').style.display = (type === 'collective') ? 'block' : 'none';
+        }
+
+        function updatePaymentInstructions() {
+            const operator = document.getElementById('dep-operator').value;
+            const infoBox = document.getElementById('payment-instructions');
+            if (operator === "Airtel Money Tchad") {
+                infoBox.innerHTML = `💸 Envoi Airtel : <b>62457888</b> (Methone Kyanginbo Eraste)`;
+            } else if (operator === "Moov Money") {
+                infoBox.innerHTML = `💸 Envoi Moov : <b>98587597</b> (Methoné Kyanginbo Eraste)`;
+            }
+        }
+
+        async function hashPassword(p) {
+            const buffer = new TextEncoder().encode(p);
+            const hash = await crypto.subtle.digest('SHA-256', buffer);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                showNotification("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('t_users'));
+            if(users.find(u => u.phone === phone)) { 
+                showNotification("⚠️ Ce numéro possède déjà un compte.", "warning"); 
+                return; 
+            }
+
+            const sponsorId = sessionStorage.getItem('pending_sponsor_id') || null;
+            const securedHash = await hashPassword(password);
+            users.push({ 
+                id: 'usr_' + Date.now(), 
+                name, 
+                phone, 
+                password: securedHash,
+                referredBy: sponsorId 
+            });
+            localStorage.setItem('t_users', JSON.stringify(users));
+
+            sessionStorage.removeItem('pending_sponsor_id');
+            document.getElementById('sponsor-badge-info').style.display = 'none';
+
+            showNotification("🎉 Inscription validée !", "success");
+            showPage('login');
+        }
+
+        // CORRIGÉ : Ajout du mot-clé async indispensable pour l'utilisation de await
+        async function handleLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
+            let users = JSON.parse(localStorage.getItem('t_users'));
+            const user = users.find(u => u.phone === phone);
+
+            if (!user || user.password !== await hashPassword(password)) { 
+                showNotification("❌ Numéro ou mot de passe incorrect.", "error"); 
+                return; 
+            }
+
+            currentUser = user;
+            document.getElementById('welcome-text').innerText = `${currentUser.name} 🚀`;
+            document.getElementById('nav-actions').innerHTML = `<button class="nav-btn" style="background:var(--rose);" onclick="location.reload()">Déconnexion</button>`;
+            
+            refreshDashboard();
+            showPage('dashboard');
+            showNotification(`Bienvenue, ${currentUser.name}.`, "success");
+        }
+
+        async function handleUpdatePassword(e) {
+            e.preventDefault();
+            const currentPwd = document.getElementById('pwd-current').value;
+            const newPwd = document.getElementById('pwd-new').value;
+            const confirmPwd = document.getElementById('pwd-confirm').value;
+
+            const currentHash = await hashPassword(currentPwd);
+            if (currentUser.password !== currentHash) {
+                showNotification("❌ L'ancien mot de passe est incorrect.", "error");
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                showNotification("⚠️ Les nouveaux mots de passe ne correspondent pas.", "error");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('t_users'));
+            let globalUser = users.find(u => u.id === currentUser.id);
+
+            const newHash = await hashPassword(newPwd);
+            globalUser.password = newHash;
+            currentUser.password = newHash;
+
+            localStorage.setItem('t_users', JSON.stringify(users));
+            showNotification("🔒 Mot de passe modifié !", "success");
+            e.target.reset();
+            closePasswordModal();
+        }
+
+        function handleCreateTontine(e) {
+            e.preventDefault();
+            const title = document.getElementById('ton-title').value;
+            const type = document.getElementById('ton-type').value;
+            const frequency = document.getElementById('ton-frequency').value;
+            const amount = parseInt(document.getElementById('ton-amount').value);
+            const members = (type === 'collective') ? parseInt(document.getElementById('ton-members').value) : 1;
+
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            tontines.push({ 
+                id: 'ton_' + Date.now(), 
+                creatorId: currentUser.id, 
+                title, 
+                type, 
+                frequency, 
+                amount, 
+                members,
+                participants: [currentUser.id], 
+                ranking: {} 
+            });
+            localStorage.setItem('t_tontines', JSON.stringify(tontines));
+
+            showNotification(`✨ Tontine "${title}" activée !`, "success");
+            e.target.reset();
+            toggleFormFields();
+            switchDashboardTab('home');
+            refreshDashboard();
+        }
+
+        function handleJoinTontine(e) {
+            e.preventDefault();
+            const tonId = document.getElementById('join-ton-id').value.trim();
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let tontine = tontines.find(t => t.id === tonId);
+
+            if (!tontine) {
+                showNotification("❌ Code introuvable. Vérifiez l'identifiant.", "error");
+                return;
+            }
+            if (tontine.type !== 'collective') {
+                showNotification("⚠️ Impossible de rejoindre un coffre individuel privé.", "warning");
+                return;
+            }
+            if (tontine.participants.includes(currentUser.id)) {
+                showNotification("ℹ️ Vous êtes déjà membre de cette tontine.", "warning");
+                return;
+            }
+            if (tontine.participants.length >= tontine.members) {
+                showNotification("❌ Ce groupe de tontine est déjà complet.", "error");
+                return;
+            }
+
+            tontine.participants.push(currentUser.id);
+            localStorage.setItem('t_tontines', JSON.stringify(tontines));
+            showNotification(`🎉 Vous avez rejoint la tontine : ${tontine.title}`, "success");
+            e.target.reset();
+            switchDashboardTab('home');
+            refreshDashboard();
+        }
+
+        function refreshDashboard() {
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let history = JSON.parse(localStorage.getItem('t_history'));
+            let users = JSON.parse(localStorage.getItem('t_users'));
+            let totalGroup = 0; let totalSolo = 0;
+
+            let myTontines = tontines.filter(t => t.creatorId === currentUser.id || (t.participants && t.participants.includes(currentUser.id)));
+            
+            const container = document.getElementById('my-tontines-container');
+            container.innerHTML = myTontines.length === 0 ? '<p style="font-size:0.85rem; color:var(--text-muted);">Aucune tontine active.</p>' : '';
+
+            const depSelect = document.getElementById('dep-tontine-select');
+            const withSelect = document.getElementById('with-tontine-select');
+            depSelect.innerHTML = ''; withSelect.innerHTML = '';
+
+            myTontines.forEach(t => {
+                let tontineSolde = 0;
+                history.filter(h => h.tontineId === t.id && h.status === "Succès").forEach(h => tontineSolde += h.amount);
+
+                if (t.type === 'collective') totalGroup += tontineSolde;
+                else totalSolo += tontineSolde;
+
+                const isInitiator = t.creatorId === currentUser.id;
+
+                let membersHtml = '';
+                if(t.type === 'collective') {
+                    membersHtml += `<div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:8px;">`;
+                    membersHtml += `<span style="font-size:0.75rem; color:var(--text-muted);">Membres (${t.participants.length}/${t.members}) : </span>`;
+                    
+                    let orderedParticipants = [...t.participants];
+                    if(t.ranking && Object.keys(t.ranking).length > 0) {
+                        orderedParticipants.sort((a,b) => (t.ranking[a] || 99) - (t.ranking[b] || 99));
+                    }
+
+                    orderedParticipants.forEach((pId, idx) => {
+                        let uObj = users.find(u => u.id === pId);
+                        let uName = uObj ? uObj.name : "Utilisateur";
+                        let rankText = (t.ranking && t.ranking[pId] !== undefined) ? `🏆 Tour ${t.ranking[pId] + 1}` : `⏳ Non classé`;
+                        membersHtml += `
+                            <div class="member-row">
+                                <span>👤 ${uName} ${pId === t.creatorId ? '<small style="color:var(--amber)">(Admin)</small>':''}</span>
+                                <span class="badge" style="background:rgba(59, 130, 246, 0.1); color:var(--blue); font-size:0.7rem;">${rankText}</span>
+                            </div>`;
+                    });
+                    membersHtml += `</div>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'tontine-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <b style="font-size:1rem; color:white;">${t.title}</b> <button class="btn-small" style="background:var(--border); color:var(--text-muted);" onclick="copyTontineId('${t.id}')">📋 ID</button><br>
+                            <small style="color:var(--text-muted);">${t.type === 'collective' ? '👥 Collective' : '🔒 Individuelle'} — Échéance: ${t.amount.toLocaleString()} F</small>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:bold; color:${t.type === 'collective' ? 'var(--emerald)' : 'var(--blue)'}; margin-bottom: 5px;">${tontineSolde.toLocaleString()} F</div>
+                            ${ (t.type === 'collective' && isInitiator) ? `<button class="btn-small" style="background:var(--amber);" onclick="openRankingModal('${t.id}')">⚙️ Classer</button>` : '' }
+                        </div>
+                    </div>
+                    ${membersHtml}
+                `;
+                container.appendChild(div);
+
+                let opt = `<option value="${t.id}">${t.title}</option>`;
+                depSelect.innerHTML += opt;
+                withSelect.innerHTML += opt;
+            });
+
+            let pendingCount = history.filter(h => h.userId === currentUser.id && h.status === 'En attente').length;
+
+            document.getElementById('stat-group-total').innerText = totalGroup.toLocaleString() + " FCFA";
+            document.getElementById('stat-solo-total').innerText = totalSolo.toLocaleString() + " FCFA";
+            document.getElementById('stat-pending-count').innerText = pendingCount + " En attente";
+
+            const progressPercent = Math.min((totalSolo / 500000) * 100, 100);
+            document.getElementById('solo-progress-text').innerText = `${totalSolo.toLocaleString()} / 500,000 F`;
+            document.getElementById('solo-progress-fill').style.width = progressPercent + "%";
+
+            const logContainer = document.getElementById('transactions-log-container');
+            logContainer.innerHTML = '';
+            history.filter(h => h.userId === currentUser.id).forEach(tx => {
+                const tr = document.createElement('tr');
+                let bClass = tx.status === 'En attente' ? 'warning' : (tx.status === 'Refusé' ? 'danger' : '');
+                tr.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td><b>${tx.type}</b><br><small style="color:var(--text-muted);">${tx.tontineName}</small></td>
+                    <td>${tx.operator}</td>
+                    <td style="color: ${tx.amount < 0 ? 'var(--rose)' : 'var(--emerald)'};"><b>${tx.amount.toLocaleString()} F</b></td>
+                    <td><span class="badge ${bClass}">${tx.status}</span></td>
+                `;
+                logContainer.appendChild(tr);
+            });
+        }
+
+        function openRankingModal(tontineId) {
+            activeRankingTontineId = tontineId;
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let tontine = tontines.find(t => t.id === tontineId);
+            let users = JSON.parse(localStorage.getItem('t_users'));
+
+            document.getElementById('ranking-modal-title').innerText = `Classement : ${tontine.title}`;
+            const listContainer = document.getElementById('ranking-members-list');
+            listContainer.innerHTML = '';
+
+            tontine.participants.forEach((pId) => {
+                let uObj = users.find(u => u.id === pId);
+                let uName = uObj ? uObj.name : "Membre";
+                let currentPos = (tontine.ranking && tontine.ranking[pId] !== undefined) ? tontine.ranking[pId] : '';
+
+                const div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:var(--bg-main); padding:10px; border-radius:8px;";
+                div.innerHTML = `
+                    <span>👤 ${uName}</span>
+                    <div style="width:120px;">
+                        <input type="number" class="rank-input-field" data-user-id="${pId}" value="${currentPos !== '' ? currentPos + 1 : ''}" min="1" max="${tontine.participants.length}" placeholder="Tour (Ex: 1)" style="padding:6px; margin:0;">
+                    </div>
+                `;
+                listContainer.appendChild(div);
+            });
+
+            document.getElementById('ranking-modal').classList.remove('hidden');
+        }
+
+        function closeRankingModal() {
+            document.getElementById('ranking-modal').classList.add('hidden');
+            activeRankingTontineId = null;
+        }
+
+        function generateRandomRanking() {
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let tontine = tontines.find(t => t.id === activeRankingTontineId);
+            
+            let shuffled = [...tontine.participants].sort(() => Math.random() - 0.5);
+            
+            const inputs = document.querySelectorAll('.rank-input-field');
+            inputs.forEach(input => {
+                let uId = input.getAttribute('data-user-id');
+                let newPos = shuffled.indexOf(uId) + 1;
+                input.value = newPos;
+            });
+            showNotification("🎲 Tirage virtuel complété ! Cliquez sur Enregistrer pour valider.", "warning");
+        }
+
+        function saveManualRanking() {
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let tontine = tontines.find(t => t.id === activeRankingTontineId);
+            
+            let newRanking = {};
+            const inputs = document.querySelectorAll('.rank-input-field');
+            
+            let isValid = true;
+            inputs.forEach(input => {
+                let uId = input.getAttribute('data-user-id');
+                let val = parseInt(input.value);
+                if (isNaN(val) || val < 1 || val > tontine.participants.length) {
+                    isValid = false;
+                }
+                newRanking[uId] = val - 1; 
+            });
+
+            if(!isValid) {
+                showNotification("❌ Veuillez attribuer un numéro de tour valide pour chaque membre.", "error");
+                return;
+            }
+
+            tontine.ranking = newRanking;
+            localStorage.setItem('t_tontines', JSON.stringify(tontines));
+            showNotification("🏆 Ordre de passage officiel mis à jour avec succès !", "success");
+            closeRankingModal();
+            refreshDashboard();
+        }
+
+        function handleDepositSubmit(e) {
+            e.preventDefault();
+            const tontineId = document.getElementById('dep-tontine-select').value;
+            const amount = parseInt(document.getElementById('dep-amount').value);
+            const proof = document.getElementById('dep-proof').value;
+            const operator = document.getElementById('dep-operator').value;
+            const userDepositPhone = document.getElementById('dep-user-phone').value;
+            
+            if(!tontineId) { showNotification("⚠️ Veuillez d'abord créer ou rejoindre une tontine.", "warning"); return; }
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let targetTon = tontines.find(t => t.id === tontineId);
+
+            let history = JSON.parse(localStorage.getItem('t_history'));
+            history.unshift({
+                id: Date.now(), userId: currentUser.id, userName: currentUser.name,
+                tontineId, tontineName: targetTon.title,
+                date: new Date().toLocaleString('fr-FR'),
+                type: 'Dépôt', operator, amount, proof, userDepositPhone, status: 'En attente'
+            });
+            localStorage.setItem('t_history', JSON.stringify(history));
+            showNotification("📩 Reçu transmis.", "info");
+            closeDepositModal(); refreshDashboard();
+        }
+
+        function handleWithdrawalSubmit(e) {
+            e.preventDefault();
+            const tontineId = document.getElementById('with-tontine-select').value;
+            const amount = parseInt(document.getElementById('with-amount').value);
+            const phone = document.getElementById('with-phone').value;
+
+            if(!tontineId) return;
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let targetTon = tontines.find(t => t.id === tontineId);
+
+            let currentHistory = JSON.parse(localStorage.getItem('t_history'));
+            let available = 0;
+            currentHistory.filter(h => h.tontineId === tontineId && h.status === "Succès").forEach(h => available += h.amount);
+
+            if(amount > available) {
+                showNotification(`❌ Solde insuffisant (${available.toLocaleString()} F dispo).`, "error");
+                return;
+            }
+
+            const finalFee = Math.round(amount * 0.09);
+            currentHistory.unshift({
+                id: Date.now(), userId: currentUser.id, userName: currentUser.name,
+                tontineId, tontineName: targetTon.title,
+                date: new Date().toLocaleString('fr-FR'),
+                type: 'Retrait', operator: 'Mobile Money', amount: -amount, feeApplied: finalFee, 
+                proof: `Vers ${phone} (Frais système 9% inclus)`, status: 'En attente'
+            });
+            localStorage.setItem('t_history', JSON.stringify(currentHistory));
+            showNotification(`📥 Demande de retrait en attente.`, "info");
+            closeWithdrawalModal(); refreshDashboard();
+        }
+
+        function runSimulation() {
+            const m = parseInt(document.getElementById('sim-mise').value) || 0;
+            const n = parseInt(document.getElementById('sim-membres').value) || 0;
+            document.getElementById('sim-result-cagnotte').innerText = (m * n).toLocaleString() + " FCFA";
+        }
+
+        function openPasswordModal() { document.getElementById('password-modal').classList.remove('hidden'); }
+        function closePasswordModal() { document.getElementById('password-modal').classList.add('hidden'); }
+        function openDepositModal() { document.getElementById('deposit-modal').classList.remove('hidden'); updatePaymentInstructions(); if (currentUser) document.getElementById('dep-user-phone').value = currentUser.phone;}
+        function closeDepositModal() { document.getElementById('deposit-modal').classList.add('hidden'); }
+        function openWithdrawalModal() { document.getElementById('withdraw-modal').classList.remove('hidden'); document.getElementById('with-amount').value = ''; calculateWithdrawalFees(); }
+        function closeWithdrawalModal() { document.getElementById('withdraw-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
+
