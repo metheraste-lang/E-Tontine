@@ -87,8 +87,8 @@
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
-        .tabs-menu { display: flex; background: var(--bg-card); border-radius: 12px; padding: 5px; margin: 20px 0; border: 1px solid var(--border); }
-        .tab-link { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: 600; border-radius: 8px; color: var(--text-muted); transition: 0.3s; }
+        .tabs-menu { display: flex; background: var(--bg-card); border-radius: 12px; padding: 5px; margin: 20px 0; border: 1px solid var(--border); flex-wrap: wrap; }
+        .tab-link { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: 600; border-radius: 8px; color: var(--text-muted); transition: 0.3s; min-width: 120px; }
         .tab-link.active { background: var(--bg-main); color: var(--emerald); border: 1px solid var(--border); }
 
         .hero { 
@@ -146,6 +146,8 @@
 
         .member-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; margin-top: 5px; border-radius: 6px; font-size: 0.85rem;}
 
+        .admin-box { background: var(--bg-main); border: 1px solid var(--amber); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
+
         .hidden { display: none !important; }
         footer { text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 50px; }
         .btn-block { width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; border: none; }
@@ -192,11 +194,12 @@
                     </div>
                     <div class="form-group">
                         <label>Mot de passe</label>
-                        <input type="password" id="reg-password" placeholder="••••••••" minlength="6" required>
+                        <input type="password" id="reg-password" placeholder="••••••••" minlength="8" required>
+                        <p style="font-size:0.72rem; color:var(--text-muted); margin: 6px 0 0 0;">Min. 8 caractères : lettres, chiffres et un symbole (ex: ! @ # $ %).</p>
                     </div>
                     <div class="form-group">
                         <label>Confirmer le mot de passe</label>
-                        <input type="password" id="reg-confirm-password" placeholder="••••••••" minlength="6" required>
+                        <input type="password" id="reg-confirm-password" placeholder="••••••••" minlength="8" required>
                     </div>
                     <button type="submit" class="btn-block btn-emerald">Chiffrer & Enregistrer</button>
                 </form>
@@ -239,6 +242,7 @@
                 <div class="tab-link active" id="tab-home" onclick="switchDashboardTab('home')">📊 Mes Comptes</div>
                 <div class="tab-link" id="tab-create" onclick="switchDashboardTab('create')">🛠️ Créer / Rejoindre</div>
                 <div class="tab-link" id="tab-sim" onclick="switchDashboardTab('sim')">🧮 Simulateur</div>
+                <div class="tab-link hidden" id="tab-admin" onclick="switchDashboardTab('admin')">👑 Approbations</div>
             </div>
 
             <div id="dashboard-tab-home">
@@ -273,6 +277,21 @@
                             <div class="progress-bar-fill" id="solo-progress-fill"></div>
                         </div>
                     </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px; border: 1px solid var(--amber);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                        <div>
+                            <h3 style="margin:0; font-size:1.1rem;">🎖️ Niveau de Parrainage : <span id="referral-level-name" style="color:var(--amber);">Membre</span></h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin:5px 0 0 0;" id="referral-count-text">0 filleul(s) inscrit(s)</p>
+                        </div>
+                        <div style="font-size:2.5rem;" id="referral-level-icon">🌱</div>
+                    </div>
+                    <div class="progress-bar-bg" style="margin-top:15px;">
+                        <div class="progress-bar-fill" id="referral-progress-fill" style="background: linear-gradient(to right, var(--amber), var(--emerald));"></div>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;" id="referral-next-level-text"></p>
+                    <div id="referral-list-container" style="margin-top:15px;"></div>
                 </div>
 
                 <div class="card" style="margin-top: 20px;">
@@ -362,6 +381,19 @@
                     </div>
                 </div>
             </div>
+
+            <div id="dashboard-tab-admin" class="hidden">
+                <div class="card" style="border: 2px dashed var(--amber); background: rgba(245, 158, 11, 0.02);">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size: 1.4rem;">👑</span>
+                        <h3 style="margin:0; color:var(--amber); font-size: 1.1rem;">Approbations pour vos tontines</h3>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                        Vous voyez ici uniquement les dépôts et retraits en attente pour les tontines dont vous êtes l'initiateur.
+                    </p>
+                    <div id="admin-pending-requests"></div>
+                </div>
+            </div>
         </div>
 
         <div id="ranking-modal" class="modal hidden">
@@ -390,12 +422,13 @@
                         <input type="password" id="pwd-current" placeholder="••••••••" required>
                     </div>
                     <div class="form-group">
-                        <label>Nouveau Mot de passe (min 6 caractères)</label>
-                        <input type="password" id="pwd-new" placeholder="••••••••" minlength="6" required>
+                        <label>Nouveau Mot de passe (min 8 caractères)</label>
+                        <input type="password" id="pwd-new" placeholder="••••••••" minlength="8" required>
+                        <p style="font-size:0.72rem; color:var(--text-muted); margin: 6px 0 0 0;">Lettres, chiffres et un symbole (ex: ! @ # $ %).</p>
                     </div>
                     <div class="form-group">
                         <label>Confirmer le nouveau mot de passe</label>
-                        <input type="password" id="pwd-confirm" placeholder="••••••••" minlength="6" required>
+                        <input type="password" id="pwd-confirm" placeholder="••••••••" minlength="8" required>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button type="button" class="btn-block" style="background:transparent; border:1px solid var(--border); color:white;" onclick="closePasswordModal()">Annuler</button>
@@ -427,7 +460,7 @@
                     </div>
                     <div class="form-group">
                         <label>Montant Versé (FCFA)</label>
-                        <input type="number" id="dep-amount" required>
+                        <input type="number" id="dep-amount" min="1" required>
                     </div>
                     <div class="form-group">
                         <label>ID / Code de référence du reçu SMS</label>
@@ -458,7 +491,7 @@
                     </div>
                     <div class="form-group">
                         <label>Montant brut à retirer (FCFA)</label>
-                        <input type="number" id="with-amount" placeholder="Ex: 50000" oninput="calculateWithdrawalFees()" required>
+                        <input type="number" id="with-amount" placeholder="Ex: 50000" min="1" oninput="calculateWithdrawalFees()" required>
                     </div>
                     <div id="withdrawal-fee-feedback" style="font-size: 0.85rem; margin-bottom: 18px; color: var(--text-muted); background: var(--bg-main); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
                         Frais (9%) : <span style="color: var(--rose); font-weight: bold;">0 F</span> | Montant Net transféré : <span style="color: var(--emerald); font-weight: bold;">0 F</span>
@@ -480,7 +513,57 @@
         if (!localStorage.getItem('t_history')) localStorage.setItem('t_history', JSON.stringify([]));
 
         let currentUser = null;
-        let activeRankingTontineId = null; 
+        let activeRankingTontineId = null;
+
+        // --- NIVEAUX DE PARRAINAGE (basés sur le nombre de filleuls inscrits) ---
+        const REFERRAL_LEVELS = [
+            { name: "Membre", min: 0, icon: "🌱" },
+            { name: "Ambassadeur Bronze", min: 3, icon: "🥉" },
+            { name: "Ambassadeur Argent", min: 6, icon: "🥈" },
+            { name: "Ambassadeur Or", min: 10, icon: "🥇" },
+            { name: "Ambassadeur Platine", min: 15, icon: "💎" }
+        ];
+
+        function getReferralLevel(count) {
+            let current = REFERRAL_LEVELS[0];
+            let next = null;
+            for (let i = 0; i < REFERRAL_LEVELS.length; i++) {
+                if (count >= REFERRAL_LEVELS[i].min) current = REFERRAL_LEVELS[i];
+                else { next = REFERRAL_LEVELS[i]; break; }
+            }
+            return { current, next };
+        }
+
+        function updateReferralLevelUI(users) {
+            const filleuls = users.filter(u => u.referredBy === currentUser.id);
+            const { current, next } = getReferralLevel(filleuls.length);
+
+            document.getElementById('referral-level-name').innerText = current.name;
+            document.getElementById('referral-level-icon').innerText = current.icon;
+            document.getElementById('referral-count-text').innerText = `${filleuls.length} filleul(s) inscrit(s)`;
+
+            const progressEl = document.getElementById('referral-progress-fill');
+            const nextTextEl = document.getElementById('referral-next-level-text');
+
+            if (next) {
+                const span = next.min - current.min;
+                const progressed = filleuls.length - current.min;
+                const pct = Math.min((progressed / span) * 100, 100);
+                progressEl.style.width = pct + "%";
+                nextTextEl.innerText = `Encore ${next.min - filleuls.length} filleul(s) pour atteindre ${next.icon} ${next.name}`;
+            } else {
+                progressEl.style.width = "100%";
+                nextTextEl.innerText = "🎉 Niveau maximum atteint !";
+            }
+
+            const listContainer = document.getElementById('referral-list-container');
+            if (filleuls.length === 0) {
+                listContainer.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Partagez votre lien de parrainage pour inviter vos premiers filleuls.</p>';
+            } else {
+                listContainer.innerHTML = '<p style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Vos filleuls</p>' +
+                    filleuls.map(f => `<div class="member-row"><span>👤 ${f.name}</span><span style="color:var(--text-muted); font-size:0.75rem;">${f.phone}</span></div>`).join('');
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -543,6 +626,7 @@
             document.getElementById('dashboard-tab-home').classList.add('hidden');
             document.getElementById('dashboard-tab-create').classList.add('hidden');
             document.getElementById('dashboard-tab-sim').classList.add('hidden');
+            document.getElementById('dashboard-tab-admin').classList.add('hidden');
             document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
             document.getElementById('dashboard-tab-' + tabId).classList.remove('hidden');
             document.getElementById('tab-' + tabId).classList.add('active');
@@ -569,6 +653,12 @@
             return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        // Exige au minimum 8 caractères, avec au moins une lettre, un chiffre et un symbole
+        function isPasswordStrong(pwd) {
+            const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]).{8,}$/;
+            return regex.test(pwd);
+        }
+
         async function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value;
@@ -578,6 +668,11 @@
 
             if (password !== confirmPassword) {
                 showNotification("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+                return;
+            }
+
+            if (!isPasswordStrong(password)) {
+                showNotification("⚠️ Mot de passe trop faible : min. 8 caractères avec lettres, chiffres et un symbole (ex: ! @ # $ %).", "error");
                 return;
             }
 
@@ -594,7 +689,8 @@
                 name, 
                 phone, 
                 password: securedHash,
-                referredBy: sponsorId 
+                referredBy: sponsorId,
+                joinedAt: new Date().toISOString()
             });
             localStorage.setItem('t_users', JSON.stringify(users));
 
@@ -605,7 +701,6 @@
             showPage('login');
         }
 
-        // CORRIGÉ : Ajout du mot-clé async indispensable pour l'utilisation de await
         async function handleLogin(e) {
             e.preventDefault();
             const phone = document.getElementById('login-phone').value;
@@ -641,6 +736,11 @@
 
             if (newPwd !== confirmPwd) {
                 showNotification("⚠️ Les nouveaux mots de passe ne correspondent pas.", "error");
+                return;
+            }
+
+            if (!isPasswordStrong(newPwd)) {
+                showNotification("⚠️ Mot de passe trop faible : min. 8 caractères avec lettres, chiffres et un symbole.", "error");
                 return;
             }
 
@@ -810,6 +910,69 @@
                 `;
                 logContainer.appendChild(tr);
             });
+
+            updateReferralLevelUI(users);
+            renderAdminApprovals(tontines, history);
+        }
+
+        // --- CONSOLE D'APPROBATION (visible uniquement pour les initiateurs de tontines) ---
+        function renderAdminApprovals(tontines, history) {
+            const myOwnedTontineIds = tontines.filter(t => t.creatorId === currentUser.id).map(t => t.id);
+            const adminTab = document.getElementById('tab-admin');
+
+            if (myOwnedTontineIds.length === 0) {
+                adminTab.classList.add('hidden');
+                return;
+            }
+            adminTab.classList.remove('hidden');
+
+            const pendings = history.filter(h => myOwnedTontineIds.includes(h.tontineId) && h.status === 'En attente');
+            const adminContainer = document.getElementById('admin-pending-requests');
+            adminContainer.innerHTML = '';
+
+            let badgeCount = document.getElementById('admin-badge-count');
+            adminTab.innerText = pendings.length > 0 ? `👑 Approbations (${pendings.length})` : '👑 Approbations';
+
+            if (pendings.length === 0) {
+                adminContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem; padding:15px 0;">Aucune opération en attente pour vos tontines.</p>';
+                return;
+            }
+
+            pendings.forEach(tx => {
+                const div = document.createElement('div');
+                div.className = 'admin-box';
+                const isWithdrawal = tx.type === 'Retrait';
+                div.innerHTML = `
+                    <p style="margin:0 0 10px 0;">🔑 <b>${tx.type}</b> — ${tx.tontineName}<br>
+                    Par : ${tx.userName} | Montant : <b style="color:${isWithdrawal ? 'var(--rose)' : 'var(--emerald)'};">${Math.abs(tx.amount).toLocaleString()} FCFA</b></p>
+                    <p style="background:var(--bg-main); padding:10px; border-radius:8px; font-size:0.85rem; border:1px solid var(--border);">📄 ${tx.proof}</p>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="nav-btn" style="font-size:0.8rem; padding:6px 15px;" onclick="processAdminDecision(${tx.id}, 'Approuver')">✅ Approuver</button>
+                        <button class="nav-btn" style="background:var(--rose); font-size:0.8rem; padding:6px 15px;" onclick="processAdminDecision(${tx.id}, 'Rejeter')">❌ Rejeter</button>
+                    </div>
+                `;
+                adminContainer.appendChild(div);
+            });
+        }
+
+        function processAdminDecision(id, decision) {
+            let tontines = JSON.parse(localStorage.getItem('t_tontines'));
+            let history = JSON.parse(localStorage.getItem('t_history'));
+            const tx = history.find(h => h.id === id);
+            if (!tx) return;
+
+            // Sécurité : seul l'initiateur de la tontine concernée peut approuver/rejeter
+            const tontine = tontines.find(t => t.id === tx.tontineId);
+            if (!tontine || tontine.creatorId !== currentUser.id) {
+                showNotification("❌ Vous n'êtes pas autorisé à valider cette opération.", "error");
+                return;
+            }
+            if (tx.status !== 'En attente') return;
+
+            tx.status = (decision === 'Approuver') ? 'Succès' : 'Refusé';
+            localStorage.setItem('t_history', JSON.stringify(history));
+            showNotification(decision === 'Approuver' ? "✅ Opération approuvée." : "❌ Opération rejetée.", decision === 'Approuver' ? "success" : "warning");
+            refreshDashboard();
         }
 
         function openRankingModal(tontineId) {
@@ -897,8 +1060,10 @@
             const proof = document.getElementById('dep-proof').value;
             const operator = document.getElementById('dep-operator').value;
             const userDepositPhone = document.getElementById('dep-user-phone').value;
-            
+
             if(!tontineId) { showNotification("⚠️ Veuillez d'abord créer ou rejoindre une tontine.", "warning"); return; }
+            if(!amount || amount <= 0) { showNotification("⚠️ Le montant doit être supérieur à zéro.", "warning"); return; }
+
             let tontines = JSON.parse(localStorage.getItem('t_tontines'));
             let targetTon = tontines.find(t => t.id === tontineId);
 
@@ -910,7 +1075,7 @@
                 type: 'Dépôt', operator, amount, proof, userDepositPhone, status: 'En attente'
             });
             localStorage.setItem('t_history', JSON.stringify(history));
-            showNotification("📩 Reçu transmis.", "info");
+            showNotification("📩 Reçu transmis, en attente de validation par l'initiateur de la tontine.", "info");
             closeDepositModal(); refreshDashboard();
         }
 
@@ -921,6 +1086,8 @@
             const phone = document.getElementById('with-phone').value;
 
             if(!tontineId) return;
+            if(!amount || amount <= 0) { showNotification("⚠️ Le montant doit être supérieur à zéro.", "warning"); return; }
+
             let tontines = JSON.parse(localStorage.getItem('t_tontines'));
             let targetTon = tontines.find(t => t.id === tontineId);
 
@@ -942,7 +1109,7 @@
                 proof: `Vers ${phone} (Frais système 9% inclus)`, status: 'En attente'
             });
             localStorage.setItem('t_history', JSON.stringify(currentHistory));
-            showNotification(`📥 Demande de retrait en attente.`, "info");
+            showNotification(`📥 Demande de retrait en attente de validation.`, "info");
             closeWithdrawalModal(); refreshDashboard();
         }
 
@@ -961,4 +1128,3 @@
     </script>
 </body>
 </html>
-
